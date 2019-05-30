@@ -11,8 +11,16 @@ server.use(helmet());
 server.use(logger)
 
 
-server.get('/', (req, res) => {
-  res.send(`<h2>Let's write some middleware!</h2>`)
+server.get('/', async (req, res) => {
+  try {
+    const messageOfTheDay = process.env.MOTD || 'Sup' ;
+    res.status(200).json({motd: messageOfTheDay})
+  } catch (error) {
+    console.error('\nError', error);
+    res.status(500).json({error: 'Cannot retrieve anything'})
+  }
+  
+  // res.send(`<h2>Let's write some middleware!</h2>`)
 });
 
 //CRUD for users
