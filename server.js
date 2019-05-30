@@ -1,6 +1,7 @@
 const express = require('express');
 const helmet = require ('helmet')
 const userdb = require ('./users/userDb');
+const postdb = require ('./posts/postDb');
 
 const server = express();
 
@@ -68,6 +69,36 @@ server.put('/users/:id', validateUser, validateUserId, (req, res) => {
     })
 })
 
+server.get('/users/posts/:userId', (req, res) => {
+  const { userId } = req.params;
+  userdb
+    .getUserPosts(userId)
+    .then(posts => {
+      if (posts === 0) {
+       res.status(404).json({message: 'No posts from that users'})
+      }
+      res.status(200).json(posts)
+    })
+    .catch(err => {
+      res.status(500).json({
+        success: false,
+        err})
+    })
+})
+
+server.post('/posts', validatePost, (req, res) => {
+  const { user_id, text } = req.body
+  postdb
+    .insert({ user_id, text })
+    .then(post => {
+      res.status(201).json(post)
+    })
+    .catch(err => {
+      res.status(500).json({
+        message: "could not be posted" })
+    })
+})
+
 //custom middleware
 
 function logger(req, res, next) {
@@ -110,14 +141,16 @@ function validateUser(req, res, next) {
 //locally
 
 function validatePost(req, res, next) {
+  const { text } = req.body;
   if (!req.body){
     res.status(400).json({message: "missing post data"})
-  } else if(!req.body.text) {
+    next()
+  } else if(!text) {
     res.status(400).json({message: "missing required text field"})
+    next()
   } else {
-    res.json({success: true, message: "validated"})
+    next()
   }
-  next();
 }
 //locally
 
